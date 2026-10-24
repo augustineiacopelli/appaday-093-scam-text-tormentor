@@ -10,6 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <link rel="manifest" href="https://augustineiacopelli.github.io/appaday/manifests/093.webmanifest">
 <script src="https://augustineiacopelli.github.io/appaday/save.js" defer></script>
+<script src="https://augustineiacopelli.github.io/appaday/keys.js" data-app="093" data-legacy-key="appaday-093-key" data-accent="#A63D9E" defer></script>
 <title>Scam Text Tormentor | AppADay 093</title>
 <meta name="description" content="Paste a scam text, pick a performer, and let Claude write a reply that wastes the scammer's time instead of yours.">
 <meta name="color-scheme" content="dark">
@@ -565,11 +566,7 @@ footer .no{
       <button class="closebtn" id="closeSet" type="button" aria-label="Close settings">&times;</button>
     </div>
 
-    <div class="field">
-      <label class="label" for="keyInput">Anthropic API key</label>
-      <input type="password" id="keyInput" placeholder="sk-ant-..." autocomplete="off" spellcheck="false">
-      <p class="hint">Stored only in this browser. It never leaves your device except to call Anthropic directly. Get one at <a href="https://console.anthropic.com/settings/keys">console.anthropic.com</a>.</p>
-    </div>
+    <div class="field" id="keyMount"><p class="hint">The key manager is loading. If this stays, check your connection and reload.</p></div>
 
     <div class="field">
       <label class="label" for="nameInput">Session name</label>
@@ -579,7 +576,6 @@ footer .no{
 
     <div class="btnrow">
       <button class="ghost" id="saveSet" type="button">Save settings</button>
-      <button class="ghost" id="clearKey" type="button">Forget key</button>
     </div>
     <div id="setNotice"></div>
   </div>
@@ -591,7 +587,6 @@ footer .no{
 
   var CLAUDE_MODEL = 'claude-sonnet-5';
   var API_URL = 'https://api.anthropic.com/v1/messages';
-  var K_KEY = 'appaday-093-key';
   var K_NAME = 'appaday-093-name';
   var K_STATE = 'appaday-093-state';
 
@@ -909,14 +904,15 @@ footer .no{
 
   /* ---------- api ---------- */
 
-  function getKey(){
-    var k = lsGet(K_KEY);
-    return k ? k.trim() : '';
+  function callClaude(retakeFlag, onDone, onErr){
+    if (!window.AppKeys){ onErr('The key manager did not load. Check your connection and reload.'); return; }
+    window.AppKeys.get().then(function(key){
+      if (!key){ onErr('Add your Claude API key with the gear button first.'); return; }
+      callClaudeKeyed(key, retakeFlag, onDone, onErr);
+    });
   }
 
-  function callClaude(retakeFlag, onDone, onErr){
-    var key = getKey();
-    if (!key){ onErr('Add your Anthropic API key in settings first.'); return; }
+  function callClaudeKeyed(key, retakeFlag, onDone, onErr){
 
     var body = {
       model: CLAUDE_MODEL,
@@ -997,9 +993,13 @@ footer .no{
     if (busy) return;
     var txt = $('scamInput').value.trim();
     if (!txt){ notice('setupNotice','Paste the message you got first. There is nothing to work with yet.'); return; }
-    if (!getKey()){
-      notice('setupNotice','Add your Anthropic API key in settings, then raise the curtain.');
-      openSettings();
+    if (!window.AppKeys){
+      notice('setupNotice','The key manager did not load. Check your connection and reload.');
+      return;
+    }
+    if (!window.AppKeys.has()){
+      window.AppKeys.get();
+      notice('setupNotice','Add your Claude API key, then raise the curtain again.');
       return;
     }
     notice('setupNotice','');
@@ -1062,27 +1062,19 @@ footer .no{
   /* ---------- settings ---------- */
 
   function openSettings(){
-    $('keyInput').value = lsGet(K_KEY) || '';
+    if (window.AppKeys) window.AppKeys.mountSettings($('keyMount'));
     $('nameInput').value = lsGet(K_NAME) || '';
     notice('setNotice','');
     $('settingsScrim').className = 'scrim';
-    $('keyInput').focus();
   }
   function closeSettings(){
     $('settingsScrim').className = 'scrim hidden';
   }
   function saveSettings(){
-    var k = $('keyInput').value.trim();
     var n = $('nameInput').value.trim();
-    if (k) lsSet(K_KEY,k); else lsDel(K_KEY);
     if (n) lsSet(K_NAME,n); else lsDel(K_NAME);
     notice('setNotice','Settings saved.',true);
     window.setTimeout(closeSettings, 700);
-  }
-  function forgetKey(){
-    lsDel(K_KEY);
-    $('keyInput').value = '';
-    notice('setNotice','Key removed from this browser.',true);
   }
 
   /* ---------- init ---------- */
@@ -1098,7 +1090,6 @@ footer .no{
     $('gearBtn').addEventListener('click', openSettings);
     $('closeSet').addEventListener('click', closeSettings);
     $('saveSet').addEventListener('click', saveSettings);
-    $('clearKey').addEventListener('click', forgetKey);
     $('settingsScrim').addEventListener('click', function(ev){
       if (ev.target === $('settingsScrim')) closeSettings();
     });
