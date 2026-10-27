@@ -48,7 +48,7 @@ A sample text loader is built in, so you can try the app without waiting for rea
 
 One self-contained HTML file. Vanilla HTML, CSS, and JavaScript with no framework and no build step. Google Fonts is the only external asset: Abril Fatface for the marquee, Space Grotesk for everything else.
 
-The API call uses `claude-sonnet-5` with the `anthropic-dangerous-direct-browser-access` header for direct browser access. Conversation history is replayed as alternating user and assistant turns so the persona keeps continuity across the thread.
+The API call uses the current Claude Sonnet model with the `anthropic-dangerous-direct-browser-access` header for direct browser access. Conversation history is replayed as alternating user and assistant turns so the persona keeps continuity across the thread.
 
 A pasted scam message is untrusted input in the most literal sense, so it is wrapped in delimiters, labelled as data, and the system prompt instructs the model to ignore any instructions found inside it. All message text is rendered with `textContent` rather than `innerHTML`, so neither the pasted text nor the model output can inject markup.
 
