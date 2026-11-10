@@ -917,7 +917,7 @@ footer .no{
 
     var body = {
       model: CLAUDE_MODEL,
-      max_tokens: 700,
+      max_tokens: 700, thinking: (window.AppModels && window.AppModels.thinking ? window.AppModels.thinking(CLAUDE_MODEL) : undefined),
       temperature: 1,
       system: buildSystem(retakeFlag),
       messages: buildMessages()
